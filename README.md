@@ -1,6 +1,6 @@
 # Integrate Amazon Connect with SMART on FHIR backend Services
 
-![Architecture](Figures/architecture.jpg)
+![Architecture](Figures/architecture.png)
 
 ## SMART Backend Services Authorization
 
