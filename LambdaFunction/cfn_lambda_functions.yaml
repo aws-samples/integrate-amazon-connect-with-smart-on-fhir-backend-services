@@ -1,0 +1,84 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Lambda function serving Lex Bot in order to interact with SMART on FHIR backend services 
+Parameters:
+  LambdaFunctionName:
+    Type: String 
+    Default: DemoPatientBot
+    Description: The name for Lambda function
+  backendClientId:
+    Type: String 
+    Default: 7d855988-6a96-4626-990a-75af06fcb5ac
+    Description: The Clinet ID from SMART on FHIR backend service
+  KMSCMKKeyId:
+    Type: String
+    Default: 93c2be23-11fb-4131-8ccb-8c4a4944a4b1
+    Description: The Key Id for KMS CMK created earlier for signing JWT token
+  FHIREndpointAPI:
+    Type: String
+    Default: https://apporchard.epic.com/interconnect-aocurprd-oauth/api/FHIR/STU3/
+    Description: The endpoint URL for FHIR APIs
+  FHIREndpointOAuth:
+    Type: String
+    Default: https://apporchard.epic.com/interconnect-aocurprd-oauth/oauth2/token
+    Description: The endpoint URL for retrieving oauth2 token
+  EPICEndpoint:
+
+
+Resources:
+  SmartBotClientRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SmartBotClientLambdaRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:  
+      - PolicyName: LambdaRolePolicy
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogStream
+                - logs:CreateLogGroup
+                - logs:PutLogEvents
+                - kms:*
+              Resource: "*"
+  SmartBotClientFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref LambdaFunctionName
+      Handler: index.lambda_handler
+      Runtime: python3.7
+      Description: Lambda function serving Lex Bot in order to interact with SMART on FHIR backend services 
+      Role: !GetAtt SmartBotClientRole.Arn
+      MemorySize: 512
+      Timeout: 60
+      Environment:
+        Variables:
+          client_id: !Ref backendClientId
+          kms_key_id: !Ref KMSCMKKeyId
+          endpoint_stu3: !Ref FHIREndpointAPI
+          endpoint_token: !Ref FHIREndpointOAuth
+          endpoint_epic: !Ref EPICEndpoint
+      Code:
+        ZipFile: |
+          import json
+          import boto3
+          import logging
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          import os
+          def lambda_handler(event, context):
+              
+Outputs:
+  SmartBotClientFunction:
+    Description: Lambda function serving Lex Bot in order to interact with SMART on FHIR backend services 
+    Value: !GetAtt SmartBotClientFunction.Arn
