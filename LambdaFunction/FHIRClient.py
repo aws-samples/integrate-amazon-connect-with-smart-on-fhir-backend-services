@@ -79,6 +79,7 @@ class FHIRClient:
         if res_token['status'] == 200:
             headers = {'Authorization': 'Bearer {}'.format(res_token['data']['access_token']), 'Content-Type': 'application/json'}
             logger.debug(headers)
+            logger.info(patientinfo)
 
             r = self.http.request('GET', self.endpoint_stu3+'Patient', fields=patientinfo, headers=headers)
             dat = json.loads(r.data.decode())
@@ -108,32 +109,35 @@ class FHIRClient:
             r = self.http.request('GET', self.endpoint_stu3+'MedicationStatement', fields={'patient': patient_id}, headers=headers)
             if r.status == 200:
                 dat = json.loads(r.data.decode())
-                logger.debug(dat)
-                medications = []
-                for entry in dat['entry']:
-                    ms = entry['resource']
-                    medication = {}
-                    medication['status'] = ms['status']
-                    medication['category'] = ms['category']['text']
-                    medication['dateAsserted'] = ms['dateAsserted']
-                    medication['subject'] = ms['subject']['display']
-                    if 'dosage' in ms:
-                        medication['dosage'] =[]
-                        for d in ms['dosage']:
-                            dosage = {}
-                            if 'text' in d:
-                                dosage['patientInstruction'] = d['text']
-                            if 'patientInstruction' in d:
-                                dosage['patientInstruction'] = dosage['patientInstruction']
-                            if 'route' in d:
-                                dosage['route'] = d['route']['text']
-                            if 'timing' in d:
-                                dosage['timing'] = d['timing']
-                            medication['dosage'].append(dosage)
-                    if 'medicationReference' in ms:
-                        medication['medicationReference'] = ms['medicationReference']['display']
-                    medications.append(medication)
-                response = medications
+                if 'total' in  dat and dat['total']>0:
+                    medications = []
+                    for entry in dat['entry']:
+                        ms = entry['resource']
+                        if 'issue' not in ms:
+                            medication = {}
+                            medication['status'] = ms['status']
+                            medication['category'] = ms['category']['text']
+                            medication['dateAsserted'] = ms['dateAsserted']
+                            medication['subject'] = ms['subject']['display']
+                            if 'dosage' in ms:
+                                medication['dosage'] =[]
+                                for d in ms['dosage']:
+                                    dosage = {}
+                                    if 'text' in d:
+                                        dosage['patientInstruction'] = d['text']
+                                    if 'patientInstruction' in d:
+                                        dosage['patientInstruction'] = dosage['patientInstruction']
+                                    if 'route' in d:
+                                        dosage['route'] = d['route']['text']
+                                    if 'timing' in d:
+                                        dosage['timing'] = d['timing']
+                                    medication['dosage'].append(dosage)
+                            if 'medicationReference' in ms:
+                                medication['medicationReference'] = ms['medicationReference']['display']
+                            medications.append(medication)
+                    response = medications
+                else:
+                    response = 'No medication has been found.'
             else:
                 response = r.data.decode()
                 logger.info(r)

@@ -7,7 +7,6 @@ from FHIRClient import FHIRClient
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-
 ## Establish the connection to SMART on FHIR backend services
 fhirclient = FHIRClient(
     os.environ['client_id'],
@@ -187,17 +186,19 @@ def getMedHelp(intent_request):
     logger.info('intent request: {}'.format(intent_request))
     output_session_attributes = intent_request['sessionAttributes'] if intent_request['sessionAttributes'] is not None else {}
     patientid = output_session_attributes['patientid'] if output_session_attributes['patientid'] is not None else {}
-    
     res = fhirclient.get_meds(patientid)
-    logger.info(res)
+    logger.debug(res)
     if res['status']==200:
-        outputtext = 'I have found the following medications and instructions for you. '
-        for med in res["response"]:
-            outputtext += med['medicationReference'] + '. '
-            if 'dosage' in med and 'patientInstruction' in med['dosage'][0]:
-                outputtext += 'The dosage for this is the following... ' + med['dosage'][0]['patientInstruction']
-            else:
-                outputtext += 'I did not find a dosage for this medication. '
+        if type(res['response'])==str:
+            outputtext = res['response']
+        else:
+            outputtext = 'I have found the following medications and instructions for you. '
+            for med in res["response"]:
+                outputtext += med['medicationReference'] + '. '
+                if 'dosage' in med and 'patientInstruction' in med['dosage'][0]:
+                    outputtext += 'The dosage for this is the following... ' + med['dosage'][0]['patientInstruction']
+                else:
+                    outputtext += 'I did not find a dosage for this medication. '
     else:
         outputtext = 'I do not have any medication for you.'
         
@@ -220,12 +221,15 @@ def findFutureAppt(intent_request):
     patientid = output_session_attributes['patientid'] if output_session_attributes['patientid'] is not None else {}
     
     res = fhirclient.get_future_appts(patientid)
-    logger.info(res)
+    logger.debug(res)
     if res['status']==200:
-        outputtext = 'You have {0} number of future appointments, and {1} number of surgeries'.format(res['response']['Number of appointments'], res['response']['Number of surgeries'])
-        for appt in res["response"]['Appointment details']:
-            outputtext += 'Date {0}, Time: {1}, in {2} TimeZone; Provider: {3}; Department: {4}; Specialty: {5}'.format(appt['Date'], appt['Time'], appt['TimeZone'], appt['Provider'], appt['Department'], appt['Specialty'])
-            outputtext += 'StreetAddress: {0} in {1} City {2} State {3}'.format(appt['StreetAddress'][0], appt['City'], appt['State'], appt['Country'])
+        if type(res['response'])==str:
+            outputtext = res['response']
+        else:
+            outputtext = 'You have {0} number of future appointments, and {1} number of surgeries'.format(res['response']['Number of appointments'], res['response']['Number of surgeries'])
+            for appt in res["response"]['Appointment details']:
+                outputtext += 'Date {0}, Time: {1}, in {2} TimeZone; Provider: {3}; Department: {4}; Specialty: {5}'.format(appt['Date'], appt['Time'], appt['TimeZone'], appt['Provider'], appt['Department'], appt['Specialty'])
+                outputtext += 'StreetAddress: {0} in {1} City {2} State {3}'.format(appt['StreetAddress'][0], appt['City'], appt['State'], appt['Country'])
     else:
         outputtext = 'You do not have any appointment in the future.'
         
@@ -240,6 +244,8 @@ def findFutureAppt(intent_request):
 
 
 """ --- Intents --- """
+
+
 def dispatch(intent_request):
     """
     Called when the user specifies an intent for this bot.
