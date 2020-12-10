@@ -99,54 +99,6 @@ def build_response_card(title, subtitle, options):
     }
 
 
-""" --- Helper Functions --- """
-
-
-def parse_int(n):
-    try:
-        return int(n)
-    except ValueError:
-        return float('nan')
-
-
-def try_ex(func):
-    """
-    Call passed in function in try block. If KeyError is encountered return None.
-    This function is intended to be used to safely access dictionary.
-
-    Note that this function would have negative impact on performance.
-    """
-
-    try:
-        return func()
-    except KeyError:
-        return None
-        
-
-def isvalid_date(date):
-    try:
-        dateutil.parser.parse(date)
-        return True
-    except ValueError:
-        return False
-        
-        
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-
-
-def build_validation_result(is_valid, is_done, violated_slot, message_content):
-    return {
-        'isValid': is_valid,
-        'isDone': is_done,
-        'violatedSlot': violated_slot,
-        'message': {'contentType': 'PlainText', 'content': message_content}
-    }
-
 """ --- Functions that control the bot's behavior --- """
 def getPatientAuth(intent_request):
     """
@@ -155,7 +107,8 @@ def getPatientAuth(intent_request):
     logger.debug('intent request: {}'.format(intent_request))
     output_session_attributes = intent_request['currentIntent']['slots'] if intent_request['currentIntent']['slots'] is not None else {}
     telecom = intent_request['sessionAttributes']['telecom'] if intent_request['sessionAttributes']['telecom'] is not None else {}
-    logger.debug('phone number before tranformation: {}'.format(telecom))
+    
+    ## format phone number
     telecom = '{0}-{1}-{2}'.format(telecom[-10:-7], telecom[-7:-4], telecom[-4:])
     logger.debug('phone number after tranformation: {}'.format(telecom))
     patientinfo = {
@@ -244,8 +197,6 @@ def findFutureAppt(intent_request):
 
 
 """ --- Intents --- """
-
-
 def dispatch(intent_request):
     """
     Called when the user specifies an intent for this bot.

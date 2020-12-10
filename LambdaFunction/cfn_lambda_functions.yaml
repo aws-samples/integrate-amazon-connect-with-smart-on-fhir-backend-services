@@ -5,14 +5,12 @@ Parameters:
     Type: String 
     Default: DemoPatientBot
     Description: The name for Lambda function
-  backendClientId:
+  BackendClientId:
     Type: String 
-    Default: 7d855988-6a96-4626-990a-75af06fcb5ac
-    Description: The Clinet ID from SMART on FHIR backend service
+    Description: The Clinet ID from SMART on FHIR backend service. This will be obtained through Epic App Orchard
   KMSCMKKeyId:
     Type: String
-    Default: 93c2be23-11fb-4131-8ccb-8c4a4944a4b1
-    Description: The Key Id for KMS CMK created earlier for signing JWT token
+    Description: The Key Id for KMS CMK created earlier for signing JWT token. This will be obtained through AWS KMS service.
   FHIREndpointAPI:
     Type: String
     Default: https://apporchard.epic.com/interconnect-aocurprd-oauth/api/FHIR/STU3/
@@ -22,7 +20,9 @@ Parameters:
     Default: https://apporchard.epic.com/interconnect-aocurprd-oauth/oauth2/token
     Description: The endpoint URL for retrieving oauth2 token
   EPICEndpoint:
-
+    Type: String
+    Default: https://apporchard.epic.com/interconnect-aocurprd-oauth/api/epic/2019/PatientAccess/External/
+    Description: The endpoint URL for Epic API
 
 Resources:
   SmartBotClientRole:
@@ -49,7 +49,8 @@ Resources:
                 - logs:CreateLogStream
                 - logs:CreateLogGroup
                 - logs:PutLogEvents
-                - kms:*
+                - kms:DescribeKey
+                - kms:Sign
               Resource: "*"
   SmartBotClientFunction:
     Type: AWS::Lambda::Function
@@ -63,20 +64,14 @@ Resources:
       Timeout: 60
       Environment:
         Variables:
-          client_id: !Ref backendClientId
+          client_id: !Ref BackendClientId
           kms_key_id: !Ref KMSCMKKeyId
           endpoint_stu3: !Ref FHIREndpointAPI
           endpoint_token: !Ref FHIREndpointOAuth
           endpoint_epic: !Ref EPICEndpoint
       Code:
-        ZipFile: |
-          import json
-          import boto3
-          import logging
-          logger = logging.getLogger()
-          logger.setLevel(logging.INFO)
-          import os
-          def lambda_handler(event, context):
+        S3Bucket: connect-epic-us-east-1
+        S3Key: lambda_function.zip
               
 Outputs:
   SmartBotClientFunction:
