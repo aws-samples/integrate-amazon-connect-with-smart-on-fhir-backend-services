@@ -34,20 +34,20 @@ Please select the AWS Region to deploy KMS Customer Master Key and Private CA:
 [8] => eu north 1
 [9] => eu central 1
 [10] => ca central 1
-**2**
+**1**
 
 After the program finished, you will see the code signing X509 certificate in stdout and in a file named *myappcodesigningcertificate.pem* in the same folder. You will need to upload this file to SMART backend service for oauth flow.
 
-4. 
+You will also see a root Private CA created in the AWS region as selected above:
 
+![Architecture](Figures/PCAACM.png)
 
-5. Update the KMS key policy to allow AWS Lambda function:  
+as well as a Custom Master Key in KMS in the same AWS region
 
-Download the existing KMS key policy
-`aws kms get-key-policy --policy-name default --key-id <KMS KEY ID> --output text`
+![Architecture](Figures/CMKKMS.png)
 
-Make updates:
-`aws kms put-key-policy --policy-name default --key-id <KMS KEY ID> --policy file://kms_key_policy.json`
+4. Create the SMART on FHIR client Lambda function using 1-click CloudFormation deployment:  
+[![launchstackbutton](Figures/launchstack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/create/template?stackName=ConnectEpicStack&templateURL=https://connect-epic-us-east-1.s3.amazonaws.com/cfn_lambda_functions.yaml)
 
 ## Security
 
