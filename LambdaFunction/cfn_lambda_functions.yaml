@@ -19,10 +19,6 @@ Parameters:
     Type: String
     Default: https://apporchard.epic.com/interconnect-aocurprd-oauth/oauth2/token
     Description: The endpoint URL for retrieving oauth2 token
-  EPICEndpoint:
-    Type: String
-    Default: https://apporchard.epic.com/interconnect-aocurprd-oauth/api/epic/2019/PatientAccess/External/
-    Description: The endpoint URL for Epic API
 
 Resources:
   SmartBotClientRole:
@@ -68,7 +64,6 @@ Resources:
           kms_key_id: !Ref KMSCMKKeyId
           endpoint_stu3: !Ref FHIREndpointAPI
           endpoint_token: !Ref FHIREndpointOAuth
-          endpoint_epic: !Ref EPICEndpoint
       Code:
         S3Bucket: connect-epic-us-east-1
         S3Key: lambda_function.zip

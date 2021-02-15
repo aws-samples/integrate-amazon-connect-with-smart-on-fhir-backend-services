@@ -12,7 +12,6 @@ fhirclient = FHIRClient(
     os.environ['client_id'],
     os.environ['endpoint_token'],
     os.environ['endpoint_stu3'],
-    os.environ['endpoint_epic'],
     os.environ['kms_key_id']
 )
 
@@ -154,37 +153,6 @@ def getMedHelp(intent_request):
                     outputtext += 'I did not find a dosage for this medication. '
     else:
         outputtext = 'I do not have any medication for you.'
-        
-    return close(
-        output_session_attributes,
-        'Fulfilled',
-        {
-            'contentType': 'PlainText',
-            'content': outputtext
-        }
-    )
-   
-    
-def findFutureAppt(intent_request):
-    """
-    Find future appointment information for a given patient
-    """
-    logger.info('intent request: {}'.format(intent_request))
-    output_session_attributes = intent_request['sessionAttributes'] if intent_request['sessionAttributes'] is not None else {}
-    patientid = output_session_attributes['patientid'] if output_session_attributes['patientid'] is not None else {}
-    
-    res = fhirclient.get_future_appts(patientid)
-    logger.debug(res)
-    if res['status']==200:
-        if type(res['response'])==str:
-            outputtext = res['response']
-        else:
-            outputtext = 'You have {0} number of future appointments, and {1} number of surgeries'.format(res['response']['Number of appointments'], res['response']['Number of surgeries'])
-            for appt in res["response"]['Appointment details']:
-                outputtext += 'Date {0}, Time: {1}, in {2} TimeZone; Provider: {3}; Department: {4}; Specialty: {5}'.format(appt['Date'], appt['Time'], appt['TimeZone'], appt['Provider'], appt['Department'], appt['Specialty'])
-                outputtext += 'StreetAddress: {0} in {1} City {2} State {3}'.format(appt['StreetAddress'][0], appt['City'], appt['State'], appt['Country'])
-    else:
-        outputtext = 'You do not have any appointment in the future.'
         
     return close(
         output_session_attributes,

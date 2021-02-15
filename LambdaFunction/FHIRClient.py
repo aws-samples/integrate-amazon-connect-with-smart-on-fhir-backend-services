@@ -15,11 +15,10 @@ class FHIRClient:
     http=urllib3.PoolManager()
     kms_client = boto3.client('kms')
 
-    def __init__(self, client_id, endpoint_token, endpoint_stu3, endpoint_epic, kms_key_id):
+    def __init__(self, client_id, endpoint_token, endpoint_stu3, kms_key_id):
         self.client_id = client_id
         self.endpoint_token = endpoint_token
         self.endpoint_stu3 = endpoint_stu3
-        self.endpoint_epic = endpoint_epic
         self.kms_key_id = kms_key_id
 
 
@@ -151,48 +150,3 @@ class FHIRClient:
                 'response': 'JWT token not found'
             }
 
-    def get_future_appts(self, patient_id):
-        res_token = self.get_access_token(self.client_id, self.endpoint_token)
-        
-        if res_token['status'] == 200:
-            headers = {'Authorization': 'Bearer {}'.format(res_token['data']['access_token']), 'Content-Type': 'application/json'}
-            logger.debug(headers)
-            
-            postData={
-                "PatientID": patient_id,
-                "PatientIDType": "FHIR STU3"
-            }
-            r = self.http.request('POST', self.endpoint_epic+'GetFutureAppointments/Epic/Patient/Scheduling2019/GetFutureAppointments', body=json.dumps(postData), headers=headers)
-            if r.status == 200:
-                dat = json.loads(r.data.decode())
-                appointments = []
-                surgeries = 0
-                for appt in dat['Appointments']:
-                    if appt['IsSurgery'] == 'true':
-                        surgeries += 1
-                    appointments.append({
-                        'Date': appt['Date'],
-                        'Time': appt['Time'],
-                        'TimeZone': appt['ProviderDepartments'][0]['Department']['OfficialTimeZone']['Title'],
-                        'Provider': appt['ProviderDepartments'][0]['Provider']['Name'],
-                        'Department': appt['ProviderDepartments'][0]['Department']['Name'],
-                        'Specialty': appt['ProviderDepartments'][0]['Department']['Specialty']['Title'],
-                        'StreetAddress': appt['ProviderDepartments'][0]['Department']['Address']['StreetAddress'],
-                        'City': appt['ProviderDepartments'][0]['Department']['Address']['City'],
-                        'State': appt['ProviderDepartments'][0]['Department']['Address']['State']['Title'],
-                        'Country': appt['ProviderDepartments'][0]['Department']['Address']['Country']['Title'],
-                        'PostalCode': appt['ProviderDepartments'][0]['Department']['Address']['PostalCode']
-                    })
-                response = {'Number of appointments': len(appointments), 'Number of surgeries': surgeries, 'Appointment details': appointments}
-            else:
-                response = r.data.decode()
-                logger.info("response data: {}".format(response))
-            return {
-                'status': r.status,
-                'response': response
-            }
-        else: 
-            return {
-                'status': 400,
-                'response': 'JWT token not found'
-            }
